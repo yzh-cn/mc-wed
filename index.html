@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4T6FMC 服务器官网｜聊天&游戏&评论&个人中心</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:"微软雅黑",sans-serif;}
+        :root{
+            --mc-green:#72d157;
+            --dark:#121212;
+            --gray:#222;
+            --light-gray:#ddd;
+            --hover:#333;
+        }
+        body{
+            background:var(--dark);
+            color:#fff;
+            background-color:#1a1a1a;
+        }
+        .container{max-width:1100px;margin:0 auto;padding:20px;}
+
+        /* 导航栏 */
+        .nav{
+            background:var(--gray);
+            padding:15px 20px;
+            border-radius:12px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:20px;
+            flex-wrap:wrap;gap:15px;
+        }
+        .nav-title{font-size:22px;color:var(--mc-green);font-weight:bold;}
+        .nav-menu{display:flex;gap:20px;align-items:center;flex-wrap:wrap;}
+        .nav-menu a{color:#ccc;text-decoration:none;transition:0.2s;}
+        .nav-menu a.active{color:var(--mc-green);font-weight:bold;}
+        .nav-menu a:hover{color:var(--mc-green);}
+        .nav-user{display:flex;gap:15px;align-items:center;}
+        .btn{
+            padding:8px 18px;border:none;border-radius:6px;
+            cursor:pointer;font-size:14px;transition:0.2s;
+        }
+        .btn-green{background:var(--mc-green);color:#000;font-weight:bold;}
+        .btn-gray{background:#444;color:#fff;}
+        .btn:hover{opacity:0.9;}
+
+        /* 登录弹窗 */
+        .mask{
+            position:fixed;top:0;left:0;width:100%;height:100%;
+            background:rgba(0,0,0,0.8);display:none;
+            justify-content:center;align-items:center;z-index:999;
+        }
+        .modal{
+            background:var(--gray);padding:30px;border-radius:12px;
+            width:90%;max-width:400px;
+        }
+        .modal h3{color:var(--mc-green);margin-bottom:20px;text-align:center;}
+        .modal input{
+            width:100%;padding:12px;margin:8px 0;
+            background:#333;border:1px solid #444;color:#fff;
+            border-radius:6px;font-size:14px;
+        }
+        .switch{text-align:center;margin-top:15px;color:#999;cursor:pointer;}
+        .switch span{color:var(--mc-green);}
+
+        /* 页面切换 - 核心修复：页面切换完全正常 */
+        .page{display:none;}
+        .page.active{display:block;}
+
+        /* 头部 */
+        header{
+            text-align:center;padding:60px 20px;
+            background:rgba(30,30,30,0.8);border-radius:16px;margin:20px 0;
+        }
+        h1{font-size:48px;color:var(--mc-green);margin-bottom:15px;}
+        .desc{font-size:18px;color:#ccc;margin-bottom:25px;}
+        .ip-box{
+            background:var(--gray);display:inline-block;
+            padding:12px 30px;border-radius:8px;
+            font-size:20px;color:var(--mc-green);user-select:all;
+        }
+
+        /* 通用卡片 */
+        .box{
+            background:rgba(30,30,30,0.8);
+            padding:30px;border-radius:16px;margin:20px 0;
+        }
+        h2{
+            color:var(--mc-green);margin-bottom:15px;
+            border-left:4px solid var(--mc-green);padding-left:10px;
+        }
+        p{color:var(--light-gray);line-height:1.8;}
+        .status{display:flex;gap:30px;margin:20px 0;flex-wrap:wrap;}
+        .status-item{background:var(--gray);padding:15px 25px;border-radius:8px;}
+
+        /* 小游戏 */
+        .game-list{
+            display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+            gap:20px;margin-top:20px;
+        }
+        .game-card{background:var(--gray);padding:20px;border-radius:12px;text-align:center;}
+        .game-card h4{color:var(--mc-green);margin-bottom:10px;font-size:18px;}
+        .game-desc{color:#aaa;font-size:14px;margin-bottom:15px;}
+        .game-box{
+            width:100%;height:200px;background:#111;border-radius:8px;
+            display:flex;justify-content:center;align-items:center;
+            color:#888;margin-bottom:10px;overflow:hidden;position:relative;
+        }
+        canvas{background:#000;}
+
+        /* 评论区 */
+        .comment-input{
+            width:100%;height:100px;padding:15px;
+            background:#222;border:1px solid #444;color:#fff;
+            border-radius:8px;resize:none;margin-bottom:15px;font-size:14px;
+        }
+        .comment-item{background:var(--gray);padding:15px;border-radius:8px;margin:10px 0;}
+        .comment-head{display:flex;justify-content:space-between;margin-bottom:8px;}
+        .comment-nick{color:var(--mc-green);font-weight:bold;}
+        .comment-time{color:#888;font-size:12px;}
+        .comment-content{color:#eee;line-height:1.6;}
+
+        /* 聊天室 */
+        .chat-box{height:300px;overflow-y:auto;background:#111;padding:15px;border-radius:8px;margin-bottom:15px;}
+        .chat-item{margin:8px 0;}
+        .chat-me{color:#72d157;}
+        .chat-other{color:#ddd;}
+        .chat-nick{font-weight:bold;margin-right:8px;}
+        .chat-time{font-size:12px;color:#888;margin-left:10px;}
+        .chat-input{width:100%;display:flex;gap:10px;}
+        .chat-input input{flex:1;padding:12px;background:#222;border:1px solid #444;color:#fff;border-radius:6px;}
+
+        /* 个人中心 */
+        .user-info{text-align:center;padding:20px;}
+        .user-info h3{color:var(--mc-green);font-size:24px;margin-bottom:15px;}
+        .nick-input,.pwd-input{
+            width:300px;padding:10px;background:#333;
+            border:1px solid #444;color:#fff;border-radius:6px;margin:10px 0;
+        }
+        footer{text-align:center;padding:30px;color:#888;margin-top:40px;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <div class="nav-title">4T6FMC 服务器官网</div>
+            <div class="nav-menu">
+                <a href="javascript:switchPage('home')" class="active" id="nav-home">首页</a>
+                <a href="javascript:switchPage('game')" id="nav-game">休闲小游戏</a>
+                <a href="javascript:switchPage('comment')" id="nav-comment">玩家评论区</a>
+                <a href="javascript:switchPage('chat')" id="nav-chat">在线聊天室</a>
+                <a href="javascript:switchPage('user')" id="nav-user">个人中心</a>
+            </div>
+            <div class="nav-user">
+                <span id="user-tip" style="color:#aaa;">游客模式</span>
+                <button class="btn btn-green" id="login-btn" onclick="openLogin()">登录/注册</button>
+                <button class="btn btn-gray" id="logout-btn" style="display:none;" onclick="logout()">退出登录</button>
+            </div>
+        </div>
+
+        <div class="mask" id="mask">
+            <div class="modal">
+                <h3 id="modal-title">账号登录</h3>
+                <input type="text" id="username" placeholder="用户名（唯一账号）">
+                <input type="password" id="password" placeholder="密码">
+                <button class="btn btn-green" style="width:100%;margin-top:10px;" id="submit-btn" onclick="login()">立即登录</button>
+                <div class="switch">没有账号？<span id="switch-text" onclick="switchMode()">立即注册</span></div>
+            </div>
+        </div>
+
+        <!-- 首页 -->
+        <div class="page active" id="page-home">
+            <header>
+                <h1>4T6FMC 我的世界公益服务器</h1>
+                <p class="desc">国内低延迟｜永久开放｜纯净生存｜无氪金｜休闲社区｜在线加速游玩</p>
+                <div>
+                    <span class="ip-box" id="server-ip">4t6fmc.dpdns.org</span>
+                    <button class="btn btn-green" style="margin-left:12px;" onclick="copyIp()">一键复制IP</button>
+                </div>
+            </header>
+
+            <div class="box">
+                <h2>服务器实时状态</h2>
+                <div class="status">
+                    <div class="status-item">运行状态：<span style="color:#72d157">有时在线请关注官方群聊✅</span></div>
+                     <div class="status-item">QQ群:<span style="color:#72d157">932910328</span></div>
+
+                    <div class="status-item">服务器类型：<span style="color:#72d157">纯净原版生存</span></div>
+                    <div class="status-item">网络线路：<span style="color:#72d157">国内高速优化线路</span></div>
+                </div>
+            </div>
+
+            <div class="box">
+                <h2>在线游玩 & 加速教程</h2>
+                <p><strong>1. 直连游玩（默认高速）</strong></p>
+                <p>直接复制本站IP：<strong>4t6fmc.dpdns.org</strong>，进入MC多人游戏直接连接，国内原生线路延迟极低，无需额外加速。</p>
+                <p><strong>2. 网络卡顿/高延迟 加速方案</strong></p>
+                <p>若遇到偶尔卡顿、跳延迟：可使用MC专用网络加速、游戏加速器，选择【国内MC服务器加速】即可满速稳定游玩。</p>
+                <p><strong>3. 游玩须知</strong></p>
+                <p>服务器长期开放、不删档、不随意关停，适合长期建筑、红石、生存养老，管理员长期在线维护。</p>
+            </div>
+
+            <div class="box">
+                <h2>服务器详细介绍</h2>
+                <p>4T6FMC 是一款主打 <strong>纯净、公益、长期、稳定</strong> 的Minecraft生存服务器。无任何氪金项目、无强制套路、无乱封禁玩家，主打友好社区氛围。</p>
+                <p>服务器保留原版MC全部玩法：生存、建造、红石、农场、联机探险，不魔改、不破坏原版平衡，回归MC最纯粹的乐趣。</p>
+                <p><strong>服务器优势：</strong></p>
+                <p>✅ 全天候24小时稳定运行，超低宕机率</p>
+                <p>✅ 国内优化线路，电信/移动/联通三网适配</p>
+                <p>✅ 纯净原版生存，无变态插件、无破坏平衡道具</p>
+                <p>✅ 管理员文明管理，公平公正，拒绝乱ban乱踢</p>
+                <p>✅ 社区氛围轻松，适合新手、养老玩家、建筑大佬常驻</p>
+            </div>
+
+            <div class="box">
+                <h2>服务器规章制度</h2>
+                <p>1. 禁止熊行为、恶意拆毁他人建筑、偷盗物资、恶意捣乱。</p>
+                <p>2. 禁止使用外挂、透视、飞行、加速等一切作弊手段。</p>
+                <p>3. 禁止刷屏、辱骂、引战、人身攻击、恶意带节奏。</p>
+                <p>4. 禁止大规模机器刷物资、卡BUG牟利、破坏服务器平衡。</p>
+                <p>5. 文明游玩、互相尊重，共同维护纯净游戏社区。</p>
+            </div>
+
+            <div class="box">
+                <h2>问题反馈 & 管理联系</h2>
+                <p>游戏BUG、卡顿问题、误封申诉、白名单申请、服务器建议、玩家举报，均可在【在线聊天室】或【玩家评论区】留言！</p>
+            </div>
+        </div>
+
+        <!-- 小游戏页面 -->
+        <div class="page" id="page-game">
+            <div class="box">
+                <h2>官网休闲小游戏（登录即可免费游玩）</h2>
+                <p style="color:#aaa;margin-bottom:20px;">登录账号后解锁全部小游戏，休闲解压、打发时间！</p>
+                <div class="game-list">
+                    <div class="game-card">
+                        <h4>经典贪吃蛇</h4>
+                        <p class="game-desc">方向键控制，吃食物变长，不要撞墙！</p>
+                        <div class="game-box"><canvas id="snakeCanvas" width="240" height="180"></canvas></div>
+                        <button class="btn btn-green" onclick="startSnake()">开始游戏</button>
+                    </div>
+                    <div class="game-card">
+                        <h4>2048数字合成</h4>
+                        <p class="game-desc">方向键滑动合成，挑战2048高分！</p>
+                        <div class="game-box" id="game2048" style="display:flex;flex-wrap:wrap;padding:10px;gap:5px;background:#111;"></div>
+                        <button class="btn btn-green" onclick="init2048()">开始游戏</button>
+                    </div>
+                    <div class="game-card">
+                        <h4>经典打砖块</h4>
+                        <p class="game-desc">鼠标操控挡板，击碎所有砖块！</p>
+                        <div class="game-box"><canvas id="brickCanvas" width="240" height="180"></canvas></div>
+                        <button class="btn btn-green" onclick="startBrick()">开始游戏</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 评论区 -->
+        <div class="page" id="page-comment">
+            <div class="box">
+                <h2>玩家公共评论区</h2>
+                <p style="color:#aaa;margin-bottom:15px;">登录后可自由发布评论，分享游玩体验、提建议、反馈BUG！</p>
+                <textarea class="comment-input" id="commentText" placeholder="请输入你的评论内容..."></textarea>
+                <button class="btn btn-green" onclick="submitComment()">发布评论</button>
+                <div style="margin-top:30px;" id="commentList"></div>
+            </div>
+        </div>
+
+        <!-- 在线聊天室 -->
+        <div class="page" id="page-chat">
+            <div class="box">
+                <h2>玩家在线聊天室</h2>
+                <p style="color:#aaa;margin-bottom:15px;">登录即可实时聊天，和服务器玩家在线交流！</p>
+                <div class="chat-box" id="chatBox"></div>
+                <div class="chat-input">
+                    <input type="text" id="chatMsg" placeholder="输入聊天内容，回车发送...">
+                    <button class="btn btn-green" onclick="sendChat()">发送</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 个人中心 -->
+        <div class="page" id="page-user">
+            <div class="box user-info">
+                <h3>个人中心 & 资料管理</h3>
+                <p>登录账号：<span id="user-account" style="color:var(--mc-green);">未登录</span></p>
+                <p>当前展示昵称：<span id="user-nick-show" style="color:var(--mc-green);">未设置</span></p>
+
+                <p style="margin-top:20px;">修改展示昵称</p>
+                <input type="text" class="nick-input" id="nickInput" placeholder="设置/修改昵称">
+                <button class="btn btn-green" onclick="saveNick()">保存昵称</button>
+
+                <p style="margin-top:30px;color:#72d157;font-weight:bold;">修改账号密码（需验证旧密码）</p>
+                <input type="password" class="pwd-input" id="oldPwd" placeholder="请输入当前旧密码">
+                <input type="password" class="pwd-input" id="newPwd" placeholder="请输入新密码">
+                <input type="password" class="pwd-input" id="newPwd2" placeholder="请再次输入新密码">
+                <button class="btn btn-green" onclick="changePwd()">确认修改密码</button>
+
+                <p style="margin-top:20px;color:#aaa;font-size:14px;">所有资料修改实时保存，账号数据独立、安全不丢失！</p>
+            </div>
+        </div>
+
+        <footer>4T6FMC 服务器官网 · 永久免费公益开放</footer>
+    </div>
+
+    <script>
+        let isRegisterMode = false;
+        let currentUser = null;
+
+        // 游戏独立变量
+        let snakeCtx, snakeTimer, dir = [1,0];
+        let grid = [];
+        let brickCtx, brickTimer;
+
+        // 用户数据
+        function getAllUsers(){let u=localStorage.getItem("mcServerUsers");return u?JSON.parse(u):[];}
+        function saveUsers(lst){localStorage.setItem("mcServerUsers",JSON.stringify(lst));}
+        function getUserNick(){if(!currentUser)return"游客";let u=getAllUsers().find(x=>x.username===currentUser);return u&&u.nick?u.nick:currentUser;}
+
+        // 保存昵称
+        function saveNick(){
+            if(!currentUser)return alert("请先登录！");
+            let n=document.getElementById("nickInput").value.trim();
+            if(!n)return alert("昵称不能为空！");
+            let arr=getAllUsers();
+            let idx=arr.findIndex(x=>x.username===currentUser);
+            if(idx!==-1){arr[idx].nick=n;saveUsers(arr);refreshUserView();alert("昵称修改成功！");}
+        }
+
+        // 修改密码（旧密码验证+二次确认）
+        function changePwd(){
+            if(!currentUser)return alert("请先登录账号！");
+            let oldP=document.getElementById("oldPwd").value.trim();
+            let p1=document.getElementById("newPwd").value.trim();
+            let p2=document.getElementById("newPwd2").value.trim();
+
+            if(!oldP||!p1||!p2)return alert("所有密码框不能为空！");
+            if(p1!==p2)return alert("两次新密码输入不一致！");
+            if(p1.length<3)return alert("密码长度至少3位！");
+
+            let userList=getAllUsers();
+            let me=userList.find(x=>x.username===currentUser);
+            if(!me)return alert("账号异常！");
+            if(me.password!==oldP)return alert("旧密码输入错误！");
+
+            me.password=p1;
+            saveUsers(userList);
+
+            document.getElementById("oldPwd").value="";
+            document.getElementById("newPwd").value="";
+            document.getElementById("newPwd2").value="";
+            alert("密码修改成功！请重新登录！");
+            logout();
+        }
+
+        // ========== 核心修复：页面自由切换（完全不锁主页） ==========
+        function switchPage(p){
+            document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
+            document.querySelectorAll(".nav-menu a").forEach(x=>x.classList.remove("active"));
+            document.getElementById("page-"+p).classList.add("active");
+            document.getElementById("nav-"+p).classList.add("active");
+            
+            // 切换页面自动加载对应内容
+            if(p==="comment")loadComment();
+            if(p==="chat")loadChat();
+            if(p==="user")fillUserInfo();
+            if(p==="game")init2048();
+        }
+
+        // 登录注册
+        function openLogin(){document.getElementById("mask").style.display="flex";resetModal();}
+        function closeLogin(){document.getElementById("mask").style.display="none";}
+        function switchMode(){
+            isRegisterMode=!isRegisterMode;
+            if(isRegisterMode){
+                document.getElementById("modal-title").innerText="账号注册";
+                document.getElementById("submit-btn").innerText="立即注册";
+                document.querySelector(".switch").innerHTML="已有账号？<span onclick='switchMode()'>立即登录</span>";
+            }else{
+                document.getElementById("modal-title").innerText="账号登录";
+                document.getElementById("submit-btn").innerText="立即登录";
+                document.querySelector(".switch").innerHTML="没有账号？<span onclick='switchMode()'>立即注册</span>";
+            }
+        }
+        function resetModal(){document.getElementById("username").value="";document.getElementById("password").value="";isRegisterMode=false;switchMode();}
+        function login(){
+            let u=document.getElementById("username").value.trim();
+            let p=document.getElementById("password").value.trim();
+            if(!u||!p)return alert("账号密码不能为空！");
+            let list=getAllUsers();
+            if(isRegisterMode){
+                if(list.find(x=>x.username===u))return alert("账号已存在！");
+                list.push({username:u,password:p,nick:""});
+                saveUsers(list);
+                alert("注册成功，请登录！");resetModal();return;
+            }
+            let find=list.find(x=>x.username===u&&x.password===p);
+            if(!find)return alert("账号或密码错误！");
+            currentUser=u;localStorage.setItem("mcCurrentUser",u);
+            closeLogin();refreshUserView();alert("登录成功！欢迎 "+(find.nick||u));
+        }
+        function logout(){currentUser=null;localStorage.removeItem("mcCurrentUser");refreshUserView();switchPage("home");}
+        function refreshUserView(){
+            if(currentUser){
+                let n=getUserNick();
+                document.getElementById("user-tip").innerText="欢迎："+n;
+                document.getElementById("login-btn").style.display="none";
+                document.getElementById("logout-btn").style.display="inline-block";
+            }else{
+                document.getElementById("user-tip").innerText="游客模式";
+                document.getElementById("login-btn").style.display="inline-block";
+                document.getElementById("logout-btn").style.display="none";
+            }
+        }
+        function fillUserInfo(){
+            if(currentUser){
+                document.getElementById("user-account").innerText=currentUser;
+                document.getElementById("user-nick-show").innerText=getUserNick();
+                document.getElementById("nickInput").value=getUserNick();
+            }else{
+                document.getElementById("user-account").innerText="未登录";
+                document.getElementById("user-nick-show").innerText="未设置";
+                document.getElementById("nickInput").value="";
+            }
+        }
+
+        // 评论区功能
+        function getAllComment(){let d=localStorage.getItem("mcComment");return d?JSON.parse(d):[];}
+        function saveComment(lst){localStorage.setItem("mcComment",JSON.stringify(lst));}
+        function submitComment(){
+            if(!currentUser)return alert("请先登录！");
+            let txt=document.getElementById("commentText").value.trim();
+            if(!txt)return alert("评论不能为空！");
+            let list=getAllComment();
+            list.unshift({nick:getUserNick(),content:txt,time:new Date().toLocaleString()});
+            saveComment(list);
+            document.getElementById("commentText").value="";
+            loadComment();alert("评论发布成功！");
+        }
+        function loadComment(){
+            let list=getAllComment();
+            let html="";
+            if(list.length===0)html="<p style='text-align:center;color:#888'>暂无评论，快来抢沙发！</p>";
+            else list.forEach(x=>{
+                html+=`<div class="comment-item">
+                    <div class="comment-head"><span class="comment-nick">${x.nick}</span><span class="comment-time">${x.time}</span></div>
+                    <div class="comment-content">${x.content}</div></div>`;
+            });
+            document.getElementById("commentList").innerHTML=html;
+        }
+
+        // 聊天室功能
+        function getAllChat(){let d=localStorage.getItem("mcChat");return d?JSON.parse(d):[];}
+        function saveChat(lst){localStorage.setItem("mcChat",JSON.stringify(lst));}
+        function sendChat(){
+            if(!currentUser)return alert("请先登录后聊天！");
+            let val=document.getElementById("chatMsg").value.trim();
+            if(!val)return;
+            let chat=getAllChat();
+            chat.push({nick:getUserNick(),msg:val,time:new Date().toLocaleString()});
+            if(chat.length>80)chat=chat.slice(-80);
+            saveChat(chat);
+            document.getElementById("chatMsg").value="";
+            loadChat();
+        }
+        function loadChat(){
+            let list=getAllChat();
+            let box=document.getElementById("chatBox");
+            let html="";
+            list.forEach(x=>{
+                let cls=x.nick===getUserNick()?"chat-me":"chat-other";
+                html+=`<div class="chat-item ${cls}">
+                    <span class="chat-nick">${x.nick}</span>
+                    <span>${x.msg}</span>
+                    <span class="chat-time">${x.time}</span>
+                </div>`;
+            });
+            box.innerHTML=html;
+            box.scrollTop=box.scrollHeight;
+        }
+
+        // 聊天回车发送
+        document.getElementById("chatMsg").addEventListener("keydown",function(e){
+            if(e.key==="Enter")sendChat();
+        });
+
+        // 复制IP
+        function copyIp(){
+            let ip=document.getElementById("server-ip").innerText;
+            navigator.clipboard.writeText(ip);
+            alert("已复制服务器IP："+ip);
+        }
+
+        // ========== 小游戏功能（独立按键，不冲突页面切换） ==========
+        // 贪吃蛇
+        function startSnake(){
+            if(!currentUser)return alert("请先登录解锁小游戏！");
+            let canvas=document.getElementById("snakeCanvas");
+            snakeCtx=canvas.getContext("2d");
+            let snake=[[10,10]],food=[15,15];
+            dir=[1,0];
+            clearInterval(snakeTimer);
+            snakeTimer=setInterval(()=>{
+                let h=[snake[0][0]+dir[0],snake[0][1]+dir[1]];
+                snake.unshift(h);
+                if(h[0]==food[0]&&h[1]==food[1])food=[Math.random()*20|0,Math.random()*15|0];
+                else snake.pop();
+                if(h[0]<0||h[0]>23||h[1]<0||h[1]>17){clearInterval(snakeTimer);alert("游戏结束！");}
+                snakeCtx.fillStyle="#000";snakeCtx.fillRect(0,0,240,180);
+                snakeCtx.fillStyle="#72d157";snake.forEach(p=>snakeCtx.fillRect(p[0]*10,p[1]*10,9,9));
+                snakeCtx.fillStyle="#f00";snakeCtx.fillRect(food[0]*10,food[1]*10,9,9);
+            },100);
+        }
+
+        // 2048
+        function init2048(){
+            grid=Array(16).fill(0);random2();random2();render2048();
+        }
+        function random2(){
+            let e=[];grid.forEach((v,i)=>{if(!v)e.push(i);});
+            if(e.length)grid[e[Math.floor(Math.random()*e.length)]]=2;
+        }
+        function render2048(){
+            let d=document.getElementById("game2048");d.innerHTML="";
+            grid.forEach(v=>{
+                let div=document.createElement("div");
+                div.style.width="45px";div.style.height="45px";
+                div.style.background=v?"#333":"#222";
+                div.style.color="#72d157";div.style.textAlign="center";
+                div.style.lineHeight="45px";div.style.fontWeight="bold";
+                div.innerText=v||"";d.appendChild(div);
+            });
+        }
+        function moveLeft(){
+            let ch=false;
+            for(let i=0;i<4;i++){
+                let row=grid.slice(i*4,i*4+4).filter(x=>x);
+                for(let j=0;j<row.length-1;j++){
+                    if(row[j]===row[j+1]){row[j]*=2;row.splice(j+1,1);ch=true;}
+                }
+                let nr=Array(4).fill(0);
+                row.forEach((v,idx)=>nr[idx]=v);
+                for(let j=0;j<4;j++)if(grid[i*4+j]!==nr[j])ch=true;
+                grid.splice(i*4,4,...nr);
+            }
+            return ch;
+        }
+        function moveRight(){
+            let ch=false;
+            for(let i=0;i<4;i++){
+                let row=grid.slice(i*4,i*4+4).filter(x=>x);
+                for(let j=row.length-1;j>0;j--){
+                    if(row[j]===row[j-1]){row[j]*=2;row.splice(j-1,1);ch=true;}
+                }
+                let nr=Array(4).fill(0);
+                row.forEach((v,idx)=>nr[4-row.length+idx]=v);
+                for(let j=0;j<4;j++)if(grid[i*4+j]!==nr[j])ch=true;
+                grid.splice(i*4,4,...nr);
+            }
+            return ch;
+        }
+        function moveUp(){
+            let ch=false;
+            for(let col=0;col<4;col++){
+                let arr=[];
+                for(let r=0;r<4;r++)if(grid[r*4+col])arr.push(grid[r*4+col]);
+                for(let i=0;i<arr.length-1;i++){
+                    if(arr[i]===arr[i+1]){arr[i]*=2;arr.splice(i+1,1);ch=true;}
+                }
+                for(let r=0;r<4;r++)grid[r*4+col]=arr[r]||0;
+            }
+            return ch;
+        }
+        function moveDown(){
+            let ch=false;
+            for(let col=0;col<4;col++){
+                let arr=[];
+                for(let r=0;r<4;r++)if(grid[r*4+col])arr.push(grid[r*4+col]);
+                for(let i=arr.length-1;i>0;i--){
+                    if(arr[i]===arr[i-1]){arr[i]*=2;arr.splice(i-1,1);ch=true;}
+                }
+                for(let r=3;r>=0;r--)grid[r*4+col]=arr[r-(4-arr.length)]||0;
+            }
+            return ch;
+        }
+
+        // 打砖块
+        function startBrick(){
+            if(!currentUser)return alert("请先登录解锁小游戏！");
+            let c=document.getElementById("brickCanvas");
+            brickCtx=c.getContext("2d");
+            let x=120,y=90,dx=2,dy=-2,pad=90;
+            clearInterval(brickTimer);
+            brickTimer=setInterval(()=>{
+                brickCtx.fillStyle="#000";brickCtx.fillRect(0,0,240,180);
+                brickCtx.fillStyle="#72d157";brickCtx.fillRect(pad,160,60,10);
+                brickCtx.beginPath();brickCtx.arc(x,y,5,0,Math.PI*2);
+                brickCtx.fillStyle="#fff";brickCtx.fill();
+                x+=dx;y+=dy;
+                if(x<5||x>235)dx=-dx;
+                if(y<5)dy=-dy;
+                if(y>175){clearInterval(brickTimer);alert("游戏结束！");}
+            },20);
+            c.onmousemove=e=>{
+                let r=c.getBoundingClientRect();
+                pad=e.clientX-r.left-30;
+            };
+        }
+
+        // 仅在游戏页面激活游戏按键（彻底解决页面卡死）
+        document.addEventListener("keydown",function(e){
+            // 只有在小游戏页面才响应游戏按键，不影响页面切换
+            if(document.getElementById("page-game").classList.contains("active")){
+                // 贪吃蛇按键
+                if(snakeTimer){
+                    if(e.key==="ArrowUp")dir=[0,-1];
+                    if(e.key==="ArrowDown")dir=[0,1];
+                    if(e.key==="ArrowLeft")dir=[-1,0];
+                    if(e.key==="ArrowRight")dir=[1,0];
+                }
+                // 2048按键
+                let hasChange=false;
+                if(e.key==="ArrowLeft")hasChange=moveLeft();
+                if(e.key==="ArrowRight")hasChange=moveRight();
+                if(e.key==="ArrowUp")hasChange=moveUp();
+                if(e.key==="ArrowDown")hasChange=moveDown();
+                if(hasChange){random2();render2048();}
+            }
+        });
+
+        // 页面初始化
+        window.onload=function(){
+            let auto=localStorage.getItem("mcCurrentUser");
+            if(auto)currentUser=auto;
+            refreshUserView();
+            init2048();
+            loadComment();
+            loadChat();
+        }
+    </script>
+</body>
+</html>
